@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" fill="none">
+  <rect width="108" height="108" rx="24" fill="#0A2540"/>
+  <circle cx="54" cy="54" r="36" fill="#FFFFFF"/>
+  <rect x="28" y="38" width="52" height="32" rx="4" fill="#0A2540"/>
+  <rect x="34" y="46" width="40" height="16" rx="2" fill="#FFFFFF"/>
+  <rect x="44" y="50" width="14" height="8" rx="1" fill="#0A2540"/>
+  <circle cx="72" cy="34" r="12" fill="#00C2A0"/>
+  <text x="72" y="39" text-anchor="middle" fill="#0A2540" font-size="14" font-weight="bold" font-family="Arial">₽</text>
+</svg>
