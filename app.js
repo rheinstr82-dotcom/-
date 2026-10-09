@@ -128,13 +128,27 @@ function updateBalance() {
   const currencies = Object.keys(byCur);
   if (!currencies.length) {
     document.getElementById('balance-value').textContent = formatMoney(0, 'MDL');
-    document.getElementById('owed-to-me').textContent = formatMoney(0, 'MDL');
-    document.getElementById('i-owe').textContent = formatMoney(0, 'MDL');
+    const o = document.getElementById('owed-to-me');
+    const i = document.getElementById('i-owe');
+    o.textContent = formatMoney(0, 'MDL');
+    i.textContent = formatMoney(0, 'MDL');
+    o.classList.remove('red'); o.classList.add('green');
+    i.classList.remove('red'); i.classList.add('green');
     return;
   }
   document.getElementById('balance-value').textContent = currencies.map(c => formatMoney(byCur[c].owed - byCur[c].owe, c)).join(' · ');
-  document.getElementById('owed-to-me').textContent = currencies.map(c => formatMoney(byCur[c].owed, c)).join(' · ');
-  document.getElementById('i-owe').textContent = currencies.map(c => formatMoney(byCur[c].owe, c)).join(' · ');
+  const owedEl = document.getElementById('owed-to-me');
+  const iOweEl = document.getElementById('i-owe');
+  owedEl.textContent = currencies.map(c => formatMoney(byCur[c].owed, c)).join(' · ');
+  iOweEl.textContent = currencies.map(c => formatMoney(byCur[c].owe, c)).join(' · ');
+
+  // Долг — красный; ноль по «Я должен» — зелёный
+  const totalOwed = currencies.reduce((s, c) => s + byCur[c].owed, 0);
+  const totalIOwe = currencies.reduce((s, c) => s + byCur[c].owe, 0);
+  owedEl.classList.toggle('red', totalOwed > 0);
+  owedEl.classList.toggle('green', totalOwed <= 0);
+  iOweEl.classList.toggle('red', totalIOwe > 0);
+  iOweEl.classList.toggle('green', totalIOwe <= 0);
 }
 
 function render() {
@@ -156,7 +170,7 @@ function renderList() {
     const texts = {
       all: 'Нет долгов.<br>Нажмите + чтобы добавить.',
       active: 'Нет активных долгов',
-      owed: 'Вам никто не должен',
+      owed: 'Вам больше никто не должен',
       owe: 'Вы никому не должны'
     };
     document.getElementById('empty-text').innerHTML = texts[currentFilter] || texts.all;
@@ -190,8 +204,8 @@ function personCardHTML(p) {
 
   const amountsHTML = `
     <div class="person-amounts">
-      ${owedParts.length ? `<div class="amt-owed">Мне: <strong>${owedParts.join(' · ')}</strong></div>` : ''}
-      ${oweParts.length ? `<div class="amt-owe">Я: <strong>${oweParts.join(' · ')}</strong></div>` : ''}
+      ${owedParts.length ? `<div class="amt-owed">Мне ещё: <strong>${owedParts.join(' · ')}</strong></div>` : ''}
+      ${oweParts.length ? `<div class="amt-owe">Я должен: <strong>${oweParts.join(' · ')}</strong></div>` : ''}
       ${fullySettled ? statusHTML : ''}
     </div>`;
 
@@ -239,7 +253,7 @@ function clientBodyHTML(name) {
       const owe = bal[c].owe;
       if (owed > 0) {
         anyOpen = true;
-        balHTML += `<div class="client-bal-row"><span>Мне должны</span><strong class="text-debt">${formatMoney(owed, c)}</strong></div>`;
+        balHTML += `<div class="client-bal-row"><span>Мне ещё должны</span><strong class="text-debt">${formatMoney(owed, c)}</strong></div>`;
       }
       if (owe > 0) {
         anyOpen = true;
@@ -268,7 +282,7 @@ function clientBodyHTML(name) {
       const isPay = !!d.isPayment;
       const typeLabel = isPay
         ? (d.isOwedToMe ? 'Погашение (мне)' : 'Погашение (я)')
-        : (d.isOwedToMe ? 'Долг мне' : 'Мой долг');
+        : (d.isOwedToMe ? 'Долг мне' : 'Я должен');
       const colorClass = isPay ? 'hist-pay' : 'hist-debt';
       const sign = isPay ? '−' : '+';
       historyHTML += `
