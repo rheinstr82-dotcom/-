@@ -184,6 +184,13 @@ function bindEvents() {
   // FAB
   document.getElementById('btn-add').addEventListener('click', () => openAdd());
 
+  // Backup
+  document.getElementById('btn-export').addEventListener('click', exportData);
+  document.getElementById('btn-import').addEventListener('click', () => {
+    document.getElementById('input-import').click();
+  });
+  document.getElementById('input-import').addEventListener('change', importData);
+
   // Modal close
   document.getElementById('btn-close-modal').addEventListener('click', closeModal);
   document.getElementById('btn-cancel').addEventListener('click', closeModal);
@@ -520,6 +527,75 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+// ---------- Backup / Restore ----------
+function exportData() {
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    debts: debts
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `dolgi-backup-${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Копия сохранена');
+}
+
+function importData(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      let list = [];
+      if (Array.isArray(data)) {
+        list = data;
+      } else if (data && Array.isArray(data.debts)) {
+        list = data.debts;
+      } else {
+        showToast('Неверный файл');
+        return;
+      }
+
+      if (!confirm(`Восстановить ${list.length} долг(ов)?\nТекущие данные будут заменены.`)) {
+        e.target.value = '';
+        return;
+      }
+
+      debts = list.map(d => ({
+        id: d.id || crypto.randomUUID(),
+        personName: d.personName || 'Без имени',
+        amount: Number(d.amount) || 0,
+        isOwedToMe: !!d.isOwedToMe,
+        currency: d.currency || 'MDL',
+        phone: d.phone || null,
+        description: d.description || '',
+        dueDate: d.dueDate || null,
+        photo: d.photo || null,
+        createdAt: d.createdAt || Date.now(),
+        isReturned: !!d.isReturned
+      }));
+
+      saveDebts();
+      render();
+      showToast('Данные восстановлены');
+    } catch (err) {
+      console.error(err);
+      showToast('Ошибка чтения файла');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
 }
 
 function showToast(msg) {
